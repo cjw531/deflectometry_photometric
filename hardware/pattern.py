@@ -1,5 +1,4 @@
 import numpy as np
-from PIL import Image, ImageTk
 
 class GradientPattern:
     def __init__(self, resolution, frequency=0):
@@ -50,32 +49,40 @@ class GradientPattern:
 
 
 class SinusoidalPattern:
-    def __init__(self, resolution, frequency=0):
-        super().__init__(resolution, frequency)
+    def __init__(self, resolution):
+        if resolution[0] < resolution[1]:
+            self.resolution = reversed(resolution)
+        else:
+            self.resolution = resolution
+            
         self.x = np.linspace(1, self.resolution[0], self.resolution[0])
         self.y = np.linspace(1, self.resolution[1], self.resolution[1])
         [self.X, self.Y] = np.meshgrid(self.x, self.y)
         self.patterns = None
         # Set frequency depending on screen resolution
         self.frequency = 1 / self.resolution[0]
-
-    def createSinusXY(self, nph, red=1.0, green=1.0, blue=1.0):
+    
+    def createSinusXY(self, nph=4):
         # Number of phase shifts: nph
         # Set up pattern list to store phase shift images (X and Y direction)
         self.patterns = np.zeros((self.resolution[1], self.resolution[0], 3, nph * 2))
-        # Set up phase map
-        phaseX = self.frequency * self.X
-        phaseY = self.frequency * self.Y
+        
         # Loop of number_of_phase_shifts to create sinusoidal patterns in X and Y direction
+        x_phase = []
+        y_phase = []
         for i in range(nph):
-            # Calculate Phase Shifts in X and Y direction
-            # Simple formula to create fringes between 0 and 1:
-            phase_shift = i * 2 * np.pi / nph
-            self.patterns[:, :, 0, i] = red * (np.cos(phaseX - phase_shift) + 1) / 2
-            self.patterns[:, :, 1, i] = green * (np.cos(phaseX - phase_shift) + 1) / 2
-            self.patterns[:, :, 2, i] = blue * (np.cos(phaseX - phase_shift) + 1) / 2
-            self.patterns[:, :, 0, i + nph] = red * (np.cos(phaseY - phase_shift) + 1) / 2
-            self.patterns[:, :, 1, i + nph] = green * (np.cos(phaseY - phase_shift) + 1) / 2
-            self.patterns[:, :, 2, i + nph] = blue * (np.cos(phaseY - phase_shift) + 1) / 2
-        return self.patterns
+            k = i - 1
+            period = nph * 2
+            sin_x = 0.5 + 0.5 * np.sin(np.linspace(0, (period * np.pi), self.resolution[0]) + 0.5 * k * np.pi)
+            img = np.tile(sin_x, (self.resolution[1], 1))
+            x_phase.append(img)
 
+            period = (self.resolution[1] * nph * 2) / self.resolution[0]
+            sin_y = 0.5 + 0.5 * np.sin(np.linspace(0, (period * np.pi), self.resolution[1]) + 0.5 * k * np.pi)
+            img = np.rot90(np.tile(sin_y[:self.resolution[1]], (self.resolution[0], 1)), k=3)
+            y_phase.append(img)
+
+        x_phase = np.stack(x_phase, axis=-1)
+        y_phase = np.stack(y_phase, axis=-1)
+        self.patterns = np.concatenate((x_phase, y_phase), axis=-1)
+        return self.patterns
