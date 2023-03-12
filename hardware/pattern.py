@@ -1,17 +1,17 @@
 import numpy as np
 
 class GradientPattern:
-    def __init__(self, resolution, frequency=0):
+    def __init__(self, resolution, nph=2, frequency=0):
         # Tuple Resolution of display/screen in pixels (Width, Height)
         if resolution[0] < resolution[1]:
             self.resolution = reversed(resolution)
         else:
             self.resolution = resolution
             
-        self.frequency = frequency
+        self.frequency = frequency # Set frequency depending on screen resolution
         self.calibration = None
-        self.patterns = None
-        # Set frequency depending on screen resolution
+        self.nph = nph
+        self.patterns = self.createGradientXY()
 
     def createGradientXY(self, n=2, red=1.0, green=1.0, blue=1.0):
         # Number gradient shifts n:
@@ -49,7 +49,7 @@ class GradientPattern:
 
 
 class SinusoidalPattern:
-    def __init__(self, resolution):
+    def __init__(self, resolution, nph=4):
         if resolution[0] < resolution[1]:
             self.resolution = reversed(resolution)
         else:
@@ -58,26 +58,28 @@ class SinusoidalPattern:
         self.x = np.linspace(1, self.resolution[0], self.resolution[0])
         self.y = np.linspace(1, self.resolution[1], self.resolution[1])
         [self.X, self.Y] = np.meshgrid(self.x, self.y)
-        self.patterns = None
+        
         # Set frequency depending on screen resolution
         self.frequency = 1 / self.resolution[0]
+        self.nph = nph
+        self.patterns = self.createSinusXY()
     
-    def createSinusXY(self, nph=4):
+    def createSinusXY(self):
         # Number of phase shifts: nph
         # Set up pattern list to store phase shift images (X and Y direction)
-        self.patterns = np.zeros((self.resolution[1], self.resolution[0], 3, nph * 2))
+        self.patterns = np.zeros((self.resolution[1], self.resolution[0], 3, self.nph * 2))
         
         # Loop of number_of_phase_shifts to create sinusoidal patterns in X and Y direction
         x_phase = []
         y_phase = []
-        for i in range(nph):
+        for i in range(self.nph):
             k = i - 1
-            period = nph * 2
+            period = self.nph * 2
             sin_x = 0.5 + 0.5 * np.sin(np.linspace(0, (period * np.pi), self.resolution[0]) + 0.5 * k * np.pi)
             img = np.tile(sin_x, (self.resolution[1], 1))
             x_phase.append(img)
 
-            period = (self.resolution[1] * nph * 2) / self.resolution[0]
+            period = (self.resolution[1] * self.nph * 2) / self.resolution[0]
             sin_y = 0.5 + 0.5 * np.sin(np.linspace(0, (period * np.pi), self.resolution[1]) + 0.5 * k * np.pi)
             img = np.rot90(np.tile(sin_y[:self.resolution[1]], (self.resolution[0], 1)), k=3)
             y_phase.append(img)
