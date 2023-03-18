@@ -49,7 +49,7 @@ class GradientPattern:
 
 
 class SinusoidalPattern:
-    def __init__(self, resolution, nph=4):
+    def __init__(self, resolution, nph=4, frequency=4):
         if resolution[0] < resolution[1]:
             self.resolution = reversed(resolution)
         else:
@@ -59,8 +59,7 @@ class SinusoidalPattern:
         self.y = np.linspace(1, self.resolution[1], self.resolution[1])
         [self.X, self.Y] = np.meshgrid(self.x, self.y)
         
-        # Set frequency depending on screen resolution
-        self.frequency = 1 / self.resolution[0]
+        self.frequency = frequency
         self.nph = nph
         self.patterns = self.createSinusXY()
     
@@ -74,12 +73,12 @@ class SinusoidalPattern:
         y_phase = []
         for i in range(self.nph):
             k = i - 1
-            period = self.nph * 2
+            period = self.frequency * 2
             sin_x = 0.5 + 0.5 * np.sin(np.linspace(0, (period * np.pi), self.resolution[0]) + 0.5 * k * np.pi)
             img = np.tile(sin_x, (self.resolution[1], 1))
             x_phase.append(img)
 
-            period = (self.resolution[1] * self.nph * 2) / self.resolution[0]
+            period = (self.resolution[1] * self.frequency * 2) / self.resolution[0]
             sin_y = 0.5 + 0.5 * np.sin(np.linspace(0, (period * np.pi), self.resolution[1]) + 0.5 * k * np.pi)
             img = np.rot90(np.tile(sin_y[:self.resolution[1]], (self.resolution[0], 1)), k=3)
             y_phase.append(img)
