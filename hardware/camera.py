@@ -40,13 +40,13 @@ class Flir:
         filenamePNG, numpyPath = '', '' # init img and numpy save path name
         if calibration:
             if calibrationName is None: # calibration subfolder name NOT defined
-                filenamePNG = './data/capture_img/' + name + '.png'
+                filenamePNG = './data/capture_img/' + name + '.tif'
                 numpyPath = './data/capture_numpy/' + name
             else: # calibration subfolder name defined
-                filenamePNG = os.path.join('./data/capture_img/' + calibrationName,  name + '.PNG')
+                filenamePNG = os.path.join('./data/capture_img/' + calibrationName,  name + '.tif')
                 numpyPath = os.path.join('./data/capture_numpy/' + calibrationName,  name)
         else: # simple capture, non-calibration
-            filenamePNG = './data/capture_img/' + name + '.png'
+            filenamePNG = './data/capture_img/' + name + '.tif'
             numpyPath = './data/capture_numpy/' + name
 
         try:
@@ -65,10 +65,8 @@ class Flir:
             return None
 
     def setExposure(self, exposure):
+        self.exposure = exposure
         self.Cam.setExposure(exposure)
-
-    def getExposure(self):
-        return self.Cam.getExposure()
 
     def getFPS(self):
         return self.Cam.getFPS()
