@@ -40,43 +40,33 @@ class Screen:
         cv2.waitKey(0)  # any key
         cv2.destroyWindow('Checkerboard')
 
-    def displayPatterns(self, camera):
-        # Displays a series of pattern, which is updated in updateCanvas
-        # If you only desire to view the projection, pass on None for the input camera
+    def displayPatterns(self, camera=None):
         self.camera = camera
-        cv2.waitKey(100)
-        self.update_opencv_window()
-
-    def setPattern(self, pattern):
-        # Sets pattern to project
-        self.pattern = pattern
-
-    def update_opencv_window(self):
-        # Updates the pattern to project
-        if self.count >= self.pattern.patterns.shape[-1]:
-            # If done, quit projection
-            cv2.destroyAllWindows()
-            return
-        
-        modulation = (self.pattern.patterns[..., self.count] * 255).astype(np.uint8)
         window_name = 'Pattern'
-        cv2.namedWindow(window_name, cv2.WND_PROP_FULLSCREEN)
-        cv2.imshow(window_name, modulation)
-        cv2.moveWindow(window_name, self.projection_monitor.x, self.projection_monitor.y)
-        cv2.resizeWindow(window_name, self.projection_monitor.width, self.projection_monitor.height)
-        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-        time.sleep(2)
-        if self.camera is None:
-            print("No camera initialized.")
-        else:
-            # Take snapshot
-            if self.camera.hdr_exposures is None:
-                self.camera.getImage(name='capture_'+str(self.count))
-            else:
-                self.camera.getHDRImage(name='capture_'+str(self.count))
-        self.count += 1
-        cv2.waitKey(100)
-        self.update_opencv_window()
+        
+        for i in range(0, self.pattern.patterns.shape[-1]):
+            modulation = (self.pattern.patterns[..., i] * 255).astype(np.uint8)
+            cv2.namedWindow(window_name, cv2.WND_PROP_FULLSCREEN)
+            cv2.imshow(window_name, modulation)
+            cv2.moveWindow(window_name, self.projection_monitor.x, self.projection_monitor.y)
+            cv2.resizeWindow(window_name, self.projection_monitor.width, self.projection_monitor.height)
+            cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.waitKey(1000) # delay required so that pattern can be displayed
+    
+            if self.camera is None:
+                print("No camera initialized.")
+            else: # Take snapshot
+                if self.camera.hdr_exposures is None:
+                    self.camera.getImage(name='capture_'+str(i))
+                else:
+                    self.camera.getHDRImage(name='capture_'+str(i))
+                cv2.waitKey(int(self.camera.exposure))
+        
+        cv2.destroyAllWindows()
+
+    def setPattern(self, pattern_type):
+        # Sets pattern to project
+        self.pattern = pattern_type.patterns
 
     def getResolution(self):
         # Returns tuple of resolution (width x height)
