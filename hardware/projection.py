@@ -1,5 +1,3 @@
-from abc import ABC
-from PIL import Image, ImageTk
 import numpy as np
 import cv2
 import time
@@ -8,7 +6,7 @@ warnings.filterwarnings("ignore", message="module not found")
 
 
 class Screen:
-    def __init__(self, frequency=0, monitor_list=None, monitor_index=0):
+    def __init__(self, monitor_list=None, monitor_index=0):
         self.projection_monitor = monitor_list[monitor_index] # connected monitors
 
         print("Screen resolution: ", (self.projection_monitor.width, self.projection_monitor.height))
@@ -19,12 +17,7 @@ class Screen:
             self.resolution = reversed(resolution)
         else:
             self.resolution = resolution
-        # Frequency Projections
-        self.frequency = frequency
-        self.calibration = None
         
-        self.count = 0
-        # Create empty pattern and camera
         self.pattern = None
         self.camera = None
 
@@ -40,12 +33,12 @@ class Screen:
         cv2.waitKey(0)  # any key
         cv2.destroyWindow('Checkerboard')
 
-    def displayPatterns(self, camera=None):
+    def displayPatterns(self, camera=None, img_folder_path='./data/capture_img/'):
         self.camera = camera
         window_name = 'Pattern'
         
-        for i in range(0, self.pattern.patterns.shape[-1]):
-            modulation = (self.pattern.patterns[..., i] * 255).astype(np.uint8)
+        for i in range(0, self.pattern.shape[-1]):
+            modulation = (self.pattern[..., i] * 255).astype(np.uint8)
             cv2.namedWindow(window_name, cv2.WND_PROP_FULLSCREEN)
             cv2.imshow(window_name, modulation)
             cv2.moveWindow(window_name, self.projection_monitor.x, self.projection_monitor.y)
@@ -57,10 +50,12 @@ class Screen:
                 print("No camera initialized.")
             else: # Take snapshot
                 if self.camera.hdr_exposures is None:
-                    self.camera.getImage(name='capture_'+str(i))
+                    self.camera.getImage(name='capture_' + str(i), img_folder_path=img_folder_path)
                 else:
-                    self.camera.getHDRImage(name='capture_'+str(i))
-                cv2.waitKey(int(self.camera.exposure))
+                    self.camera.getHDRImage(name='capture_' + str(i))
+
+                # Flir exposure time is 30 microseconds while opencv takes milliseconds
+                cv2.waitKey(int(self.camera.exposure / 900)) # not / 1000 and give more time
         
         cv2.destroyAllWindows()
 
