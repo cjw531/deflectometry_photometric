@@ -2,8 +2,6 @@ import os, math, time
 import PySpin
 import numpy as np
 import cv2
-from skimage import io
-from io import BytesIO
 from IPython.display import clear_output, Image, display, update_display
 import PIL
 # from Cameras.liveDisplay import ptgCamStream, imgShow, patternDisplay
@@ -36,27 +34,23 @@ class Flir:
         self.calibration = None # Calibration object
         self.hdr_exposures = None
 
-    def getImage(self, name='test', saveImage=True, saveNumpy=True, calibration=False, calibrationName=None):
-        filenamePNG, numpyPath = '', '' # init img and numpy save path name
+    def getImage(self, name='test', img_folder_path='./data/capture_img/', saveImage=True, calibration=False, calibrationName=None):
+        if not os.path.exists(img_folder_path): # if folder does not exist, recreate
+            os.makedirs(img_folder_path)
+
+        filenamePNG = '' # init img and numpy save path name
         if calibration:
             if calibrationName is None: # calibration subfolder name NOT defined
-                filenamePNG = './data/capture_img/' + name + '.tif'
-                numpyPath = './data/capture_numpy/' + name
+                filenamePNG = img_folder_path + name + '.tif'
             else: # calibration subfolder name defined
-                filenamePNG = os.path.join('./data/capture_img/' + calibrationName,  name + '.tif')
-                numpyPath = os.path.join('./data/capture_numpy/' + calibrationName,  name)
+                filenamePNG = os.path.join(img_folder_path + calibrationName,  name + '.tif')
         else: # simple capture, non-calibration
-            filenamePNG = './data/capture_img/' + name + '.tif'
-            numpyPath = './data/capture_numpy/' + name
+            filenamePNG = img_folder_path + name + '.tif'
 
         try:
             _, img = self.Cam.grabFrame() # Take and return current camera frame
-
             if saveImage: # image save
                 cv2.imwrite(filenamePNG, cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-
-            if saveNumpy: # img in numpy format save
-                np.save(numpyPath, img)
 
             return img
 
