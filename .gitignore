@@ -134,6 +134,7 @@ data/
 *.png
 *.PNG
 *.jpeg
+*.jpg
 *.JPEG
 *.npy
 
