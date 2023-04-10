@@ -54,10 +54,6 @@ class SinusoidalPattern:
             self.resolution = reversed(resolution)
         else:
             self.resolution = resolution
-            
-        self.x = np.linspace(1, self.resolution[0], self.resolution[0])
-        self.y = np.linspace(1, self.resolution[1], self.resolution[1])
-        [self.X, self.Y] = np.meshgrid(self.x, self.y)
         
         self.frequency = frequency
         self.nph = nph
