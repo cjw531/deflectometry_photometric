@@ -1,12 +1,14 @@
+import os
 import numpy as np
 import cv2
 import time
 import warnings
+from hardware.pattern import *
 warnings.filterwarnings("ignore", message="module not found")
 
 
 class Screen:
-    def __init__(self, monitor_list=None, monitor_index=0):
+    def __init__(self, camera=None, monitor_list=None, monitor_index=0):
         self.projection_monitor = monitor_list[monitor_index] # connected monitors
 
         print("Screen resolution: ", (self.projection_monitor.width, self.projection_monitor.height))
@@ -19,10 +21,9 @@ class Screen:
             self.resolution = resolution
         
         self.pattern = None
-        self.camera = None
+        self.camera = camera
 
-    def displayCalibrationPattern(self, camera, path_calib='CalibrationImages/8_24_checker.png',
-                                  save_img='Geometric/geo'):
+    def displayCalibrationPattern(self, camera, path_calib='CalibrationImages/8_24_checker.png', save_img='Geometric/geo'):
         self.camera = camera
         img = cv2.imread(path_calib)
         cv2.namedWindow('Checkerboard', cv2.WINDOW_NORMAL)
@@ -33,8 +34,29 @@ class Screen:
         cv2.waitKey(0)  # any key
         cv2.destroyWindow('Checkerboard')
 
-    def displayPatterns(self, camera=None, img_folder_path='./data/capture_img/'):
-        self.camera = camera
+    def capture_multi_frequency(self, object_folder='./data/obj/', nph=4, max_frequency=16):
+        '''
+        Multi-frequency capture automation based on maximum period
+    
+        Parameters:
+            @object_folder: parent folder to store all the sub multi-frequence projection
+            @nph: number of phase shift
+            @max_frequency: maximum period for the sinusoidal pattern; suppose to be a value of 2^n
+        '''
+
+        if not os.path.exists(object_folder): # if folder does not exist
+            os.makedirs(object_folder) # create a new folder
+
+        power = 0
+        period = 2 ** power # start with single-period sinusoidal pattern, 2^0
+        while (period <= max_frequency): # only up until max freq
+            sub_folder_path = os.path.join(object_folder, 'period_' + str(period))
+            self.set_pattern(SinusoidalPattern(self.resolution, nph=nph, frequency=period)) # set fringe pattern
+            self.capture_with_pattern(img_folder_path=sub_folder_path) # capture data
+            power += 1 # increment exponential
+            period = 2 ** power # re-assign period
+
+    def capture_with_pattern(self, img_folder_path='./data/capture_img/'):
         window_name = 'Pattern'
         
         for i in range(0, self.pattern.shape[-1]):
@@ -59,18 +81,15 @@ class Screen:
         
         cv2.destroyAllWindows()
 
-    def setPattern(self, pattern_type):
+    def set_pattern(self, pattern_type):
         # Sets pattern to project
         self.pattern = pattern_type.patterns
 
-    def getResolution(self):
+    def get_resolution(self):
         # Returns tuple of resolution (width x height)
         return self.resolution
 
-    def setResolution(self, resolution):
+    def set_resolution(self, resolution):
         # Sets tuple of resolution (width x height)
         self.resolution = resolution
 
-    def quit_and_close(self):
-        # Close the projection
-        cv2.destroyAllWindows()
