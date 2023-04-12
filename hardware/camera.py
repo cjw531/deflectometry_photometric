@@ -41,11 +41,11 @@ class Flir:
         filenamePNG = '' # init img and numpy save path name
         if calibration:
             if calibrationName is None: # calibration subfolder name NOT defined
-                filenamePNG = img_folder_path + name + '.tif'
+                filenamePNG = os.path.join(img_folder_path, name + '.tif')
             else: # calibration subfolder name defined
                 filenamePNG = os.path.join(img_folder_path + calibrationName,  name + '.tif')
         else: # simple capture, non-calibration
-            filenamePNG = img_folder_path + name + '.tif'
+            filenamePNG = os.path.join(img_folder_path, name + '.tif')
 
         try:
             _, img = self.Cam.grabFrame() # Take and return current camera frame
