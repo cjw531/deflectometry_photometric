@@ -1,14 +1,13 @@
 import os
 import numpy as np
 import cv2
-import time
 import warnings
 from hardware.pattern import *
 warnings.filterwarnings("ignore", message="module not found")
 
 
 class Screen:
-    def __init__(self, camera=None, monitor_list=None, monitor_index=0):
+    def __init__(self, camera=None, monitor_list=None, monitor_index=0, object_folder='./data/obj/'):
         self.projection_monitor = monitor_list[monitor_index] # connected monitors
 
         print("Screen resolution: ", (self.projection_monitor.width, self.projection_monitor.height))
@@ -22,35 +21,44 @@ class Screen:
         
         self.pattern = None
         self.camera = camera
+        self.object_folder = object_folder
 
-    def displayCalibrationPattern(self, camera, path_calib='CalibrationImages/8_24_checker.png', save_img='Geometric/geo'):
-        self.camera = camera
-        img = cv2.imread(path_calib)
-        cv2.namedWindow('Checkerboard', cv2.WINDOW_NORMAL)
-        cv2.setWindowProperty('Checkerboard', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-        cv2.imshow('Checkerboard', img)
-        time.sleep(2)
-        self.camera.getImage(name=save_img, calibration=True)
-        cv2.waitKey(0)  # any key
-        cv2.destroyWindow('Checkerboard')
+    def capture_geometric_calibration(self, chessboard_path='./data/geometric_chessboard.png'):
+        window_name = 'Chessboard'
+        modulation = cv2.imread(chessboard_path)
+        cv2.namedWindow(window_name, cv2.WND_PROP_FULLSCREEN)
+        cv2.imshow(window_name, modulation)
+        cv2.moveWindow(window_name, self.projection_monitor.x, self.projection_monitor.y)
+        cv2.resizeWindow(window_name, self.projection_monitor.width, self.projection_monitor.height)
+        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        cv2.waitKey(1000) # delay required so that pattern can be displayed
 
-    def capture_multi_frequency(self, object_folder='./data/obj/', nph=4, max_frequency=16):
+        if self.camera is None:
+            print("No camera initialized.")
+        else: # Take snapshot
+            self.camera.getImage(name='checker', img_folder_path=self.object_folder)
+
+            # Flir exposure time is 30 microseconds while opencv takes milliseconds
+            cv2.waitKey(int(self.camera.exposure / 900)) # not / 1000 and give more time
+        
+        cv2.destroyAllWindows()
+
+    def capture_multi_frequency(self, nph=4, max_frequency=16):
         '''
         Multi-frequency capture automation based on maximum period
     
         Parameters:
-            @object_folder: parent folder to store all the sub multi-frequence projection
             @nph: number of phase shift
             @max_frequency: maximum period for the sinusoidal pattern; suppose to be a value of 2^n
         '''
 
-        if not os.path.exists(object_folder): # if folder does not exist
-            os.makedirs(object_folder) # create a new folder
+        if not os.path.exists(self.object_folder): # if folder does not exist
+            os.makedirs(self.object_folder) # create a new folder
 
         power = 0
         period = 2 ** power # start with single-period sinusoidal pattern, 2^0
         while (period <= max_frequency): # only up until max freq
-            sub_folder_path = os.path.join(object_folder, 'period_' + str(period))
+            sub_folder_path = os.path.join(self.object_folder, 'period_' + str(period))
             self.set_pattern(SinusoidalPattern(self.resolution, nph=nph, frequency=period)) # set fringe pattern
             self.capture_with_pattern(img_folder_path=sub_folder_path) # capture data
             power += 1 # increment exponential
@@ -71,10 +79,7 @@ class Screen:
             if self.camera is None:
                 print("No camera initialized.")
             else: # Take snapshot
-                if self.camera.hdr_exposures is None:
-                    self.camera.getImage(name='capture_' + str(i), img_folder_path=img_folder_path)
-                else:
-                    self.camera.getHDRImage(name='capture_' + str(i))
+                self.camera.getImage(name='capture_' + str(i), img_folder_path=img_folder_path)
 
                 # Flir exposure time is 30 microseconds while opencv takes milliseconds
                 cv2.waitKey(int(self.camera.exposure / 900)) # not / 1000 and give more time
