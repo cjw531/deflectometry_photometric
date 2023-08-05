@@ -58,6 +58,28 @@ class Flir:
             self.quit_and_open()
             return None
 
+    def capture_tablet(self, object_path='./data/capture_img/', nph=4, max_frequency=16, manual=True):
+        '''
+        Image capture for tablet, allow either exposure time based or manual capture with keyboard input
+        '''
+
+        if not os.path.exists(self.object_folder): # if folder does not exist
+            os.makedirs(self.object_folder) # create a new folder
+
+        power = 0
+        period = 2 ** power # start with single-period sinusoidal pattern, 2^0
+        while (period <= max_frequency): # only up until max freq
+            if manual:
+                capture_input = input("Capture ready?: ") # make a pause if it is a manual capture
+                
+            sub_folder_path = os.path.join(object_path, 'period_' + str(period)) # create period_* subfolder under object folder
+            
+            for i in range(nph * 2): # number of phase shift * 2 (x & y direction)
+                self.getImage(name='capture_' + str(i), img_folder_path=sub_folder_path) # capture
+            
+            power += 1 # increment exponential
+            period = 2 ** power # re-assign period
+
     def setExposure(self, exposure):
         self.exposure = exposure
         self.Cam.setExposure(exposure)
