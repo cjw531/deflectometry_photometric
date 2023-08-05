@@ -1,7 +1,25 @@
 import os
 import cv2
+from cv2 import aruco
 import glob
 import matplotlib.pyplot as plt
+
+def verify_mirror_aruco(img_path: str):
+    '''
+    Check if 8 aruco markers on the mirror are being detected
+    
+    Parameters:
+        @img_path: geometric calibration image (chessboard + 8 aruco markers in fov)
+    '''
+
+    img = cv2.imread(img_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    [markerCorners, markerIds, rejectedImgPoints] = cv2.aruco.detectMarkers(gray, aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250))
+    
+    if len(markerIds) != 8:
+        raise ValueError('Number of markers detected: ' + str(len(markerIds)))
+    else:
+        print('8 Aruco markers are detected!')
 
 def verify_overexposure(img_folder, filename=None, img_extension='*.tif'):
     '''
