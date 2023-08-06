@@ -4,6 +4,8 @@ from cv2 import aruco
 import glob
 import matplotlib.pyplot as plt
 
+from hardware.pattern import *
+
 def verify_mirror_aruco(img_path: str):
     '''
     Check if 8 aruco markers on the mirror are being detected
@@ -110,3 +112,56 @@ def mark_overexposure(filename, ax):
     ax[1].set_title("255 in Red")
 
     return ax
+
+def compare_computer_tablet_pattern(resolution: tuple, nph: int, max_frequency: int, tablet_path: str):
+    global_result = True
+    power = 0
+    period = 2 ** power # start with single-period sinusoidal pattern, 2^0
+    while (period <= max_frequency): # only up until max freq
+        sinusoidal = SinusoidalPattern(resolution, nph=nph, frequency=period)
+        tablet_sub_folder = os.path.join(tablet_path, 'Frequency_' + str(period))
+        
+        for i in range(nph * 2): # x-y directions (=2)
+            computer_pattern = sinusoidal.patterns[..., i] # load single sinusoidal pattern
+            tablet_pattern = os.path.join(tablet_sub_folder, 'pattern_' + str(i) + '.png')
+            result = compare_images(computer_pattern, tablet_pattern)
+            if result == False: 
+                print(result, '(Period: ' + str(period) + '; Index: ' + str(i) + ')')
+                global_result = result
+
+        power += 1 # increment exponential
+        period = 2 ** power # re-assign period
+
+    if global_result == True:
+        print('All images are identical!')
+
+def compare_images(image_array1: str, image_path2: str):
+    # Load the images
+    image1 = np.uint8(image_array1 * 255)
+    image1 = cv2.cvtColor(image1, cv2.COLOR_GRAY2BGR)
+    image2 = cv2.imread(image_path2)
+
+    '''
+    # profile plot
+    fig, axs = plt.subplots(1, 2, figsize=(12,6))
+    profile1 = (image1)[:, image1.shape[1] // 2]
+    axs[0].plot(profile1)
+    axs[0].set_ylim([0, 256])
+    profile2 = (image2)[:, image2.shape[1] // 2]
+    axs[1].plot(profile2)
+    axs[1].set_ylim([0, 256])
+    fig.tight_layout() # to avoid axes overlapping
+    fig.savefig('profile.png')
+
+    differences = np.abs(profile1 - profile2)
+    '''
+
+    difference = cv2.subtract(image1, image2) # Compare the images pixel by pixel
+    b, g, r = cv2.split(difference)
+
+    # Check if the images are identical
+    if cv2.countNonZero(b) == 0 and cv2.countNonZero(g) == 0 and cv2.countNonZero(r) == 0:
+        return True # identical
+    else:
+        return False # not identical
+    
