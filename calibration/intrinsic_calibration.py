@@ -127,7 +127,7 @@ class IntrinsicCalibration:
         # Loop through images to undistort
         for j in tqdm(imgDistortFolder):
             # Load specified image file pattern
-            if j.endswith('.JPG') or j.endswith('.jpg') or j.endswith('.tif'):
+            if j.endswith('.JPG') or j.endswith('.jpg') or j.endswith('.tif') or j.endswith('.tiff'):
                 imgDistort = cv2.imread(j)
             elif imgPattern == "*.npy":
                 imgDistort = np.load(j)
@@ -142,7 +142,7 @@ class IntrinsicCalibration:
                 os.mkdir(os.path.join(imgFolder, 'undistort'))
             # Save image in specified image pattern in destination folder - by default captured image/npy
             
-            if imgPattern == '*.JPG' or imgPattern == '*.jpg' or imgPattern == '*.tif':
+            if imgPattern == '*.JPG' or imgPattern == '*.jpg' or imgPattern == '*.tif' or imgPattern == '*.tiff':
                 imgSave = os.path.join(imgFolder, 'undistort', os.path.basename(j))
                 # gray = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
                 cv2.imwrite(imgSave, dst)
