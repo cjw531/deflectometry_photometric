@@ -34,3 +34,7 @@ dependencies:
 
 # if import gives numpy error ('module 'numpy' has no attribute 'bool'),
 # $ sudo pip3 install --force-reinstall numpy==1.23.1
+
+# WINDOWS opencv error
+# $ pip uninstall opencv-contrib-python-headless
+# $ pip install opencv-contrib-python==4.4.0.40
