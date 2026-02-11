@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import cv2
 
@@ -42,6 +43,9 @@ def generate_chessboard(resolution: tuple, checker_pixel: int, num_col: int, num
             white = not white
         white = not white
     
+    if os.path.exists('./data/') == False: # if base data path does not exist, create one
+        os.mkdir('./data/')
+
     cv2.imwrite('./data/geometric_chessboard.png', chessboard)
     
 
